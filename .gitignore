@@ -1,3 +1,6 @@
 *~
 *.o
-test
+Kiret
+parser.c
+parser.h
+lexer.c

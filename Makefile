@@ -1,14 +1,31 @@
 CC = clang
 CFLAGS = -g -O0
 LDLIBS = -lgc
-TEST_OBJS = test.o print.o object.o
 
-all: test
+OBJS = print.o object.o parser.o lexer.o
 
-test: $(TEST_OBJS)
+all: $(OBJS)
+	$(CC) $(CFLAGS) $(LDLIBS) $(OBJS) -o Kiret
 
-test.c: print.h object.h
+lexer.c: lexer.l
+	flex -o lexer.c lexer.l
 
-print.c: print.h object.h
+parser.c parser.h: parser.y
+	bison --defines=parser.h -o parser.c parser.y
 
-object.c: object.h
+test.o: print.h object.h
+
+print.o: print.h object.h
+
+object.o: object.h
+
+lexer.o: parser.h
+
+parser.o: object.h print.h
+
+clean:
+	rm -rf *.o
+	rm parser.c
+	rm parser.h
+	rm lexer.c
+	rm Kiret
