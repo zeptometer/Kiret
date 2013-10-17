@@ -2,7 +2,7 @@ CC = clang
 CFLAGS = -g -O0
 LDLIBS = -lgc
 
-OBJS = print.o object.o parser.o lexer.o
+OBJS = print.o object.o parser.o lexer.o intern.o
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) $(LDLIBS) $(OBJS) -o Kiret
@@ -17,7 +17,9 @@ test.o: print.h object.h
 
 print.o: print.h object.h
 
-object.o: object.h
+object.o: object.h intern.h
+
+intern.o: object.h intern.h
 
 lexer.o: parser.h
 

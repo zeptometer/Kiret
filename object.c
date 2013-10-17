@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "object.h"
+#include "intern.h"
 
 KrtObj
 makeKrtEmptyList ()
@@ -34,7 +35,7 @@ makeKrtSymbol (char* name)
 {
   KrtSymbol *symbol = GC_malloc(sizeof(KrtSymbol));
   KrtObj obj;
-  char* symname = GC_malloc_atomic(sizeof(char)*(1+strlen(name)));
+  char* symname = internString(name);
 
   strcpy(symname, name);
   symbol->name = symname;
