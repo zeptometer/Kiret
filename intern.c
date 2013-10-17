@@ -18,12 +18,12 @@ internString (char* name)
     }
   }
 
-  sym[n_syms] = GC_malloc(sizeof(char)*(1+strlen(name)));
+  sym[n_syms] = GC_malloc_atomic(sizeof(char)*(1+strlen(name)));
   strcpy(sym[n_syms], name);
 
-  if(++n_syms == 100) {
+  if(n_syms == 99) {
     printf("fee.. too many symbols");
   }
 
-  return name;
+  return sym[n_syms++];
 }
