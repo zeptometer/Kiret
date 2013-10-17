@@ -3,53 +3,29 @@
 #include "object.h"
 #include "print.h"
 
-int
-isKrtList (KrtObj obj)
-{
-  KrtObj rest = obj;
-
-  while(1) {
-    if (rest.type == KRT_EMPTY_LIST)
-      return 1;
-
-    if (rest.type != KRT_CONS)
-      return 0;
-
-    rest = ((KrtCons*)rest.ptr)->cdr;
-  }
-}
-
 void
-printKrtList (KrtObj obj)
+printKrtCons (KrtObj obj)
 {
   KrtCons *cell = obj.ptr;
 
   printf("(");
-  while(1) {
+  while (1) {
     KrtObj car = cell->car;
     KrtObj cdr = cell->cdr;
     
     printKrtObj(car);
 
-    if (cdr.type == KRT_EMPTY_LIST)
+    if (cdr.type == KRT_EMPTY_LIST) {
       break;
-    
-    printf(" ");
-
-    cell = cdr.ptr;
+    } else if (cdr.type == KRT_CONS) {
+      printf(" ");
+      cell = cdr.ptr;
+    } else {
+      printf(" . ");
+      printKrtObj(cdr);
+      break;
+    }
   }
-  printf(")");
-}
-
-void
-printKrtCons (KrtObj obj)
-{
-  KrtCons *cell = obj.ptr;
-  
-  printf("(");
-  printKrtObj(cell->car);
-  printf(" . ");
-  printKrtObj(cell->cdr);
   printf(")");
 }
 
@@ -61,11 +37,7 @@ printKrtObj (KrtObj obj)
     printf("()");
     break;
   case KRT_CONS:
-    if (isKrtList(obj)) {
-      printKrtList(obj);
-    } else {
-      printKrtCons(obj);
-    }
+    printKrtCons(obj);
     break;
   case KRT_SYMBOL:
     printf("%s", ((KrtSymbol*)obj.ptr)->name);
