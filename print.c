@@ -4,22 +4,24 @@
 #include "print.h"
 
 void
-printKrtCons (KrtObj obj)
+printKrtCons (KrtObj cons)
 {
-  KrtCons *cell = obj.ptr;
+  KrtObj car = getCar(cons);
+  KrtObj cdr = getCdr(cons);
 
   printf("(");
   while (1) {
-    KrtObj car = cell->car;
-    KrtObj cdr = cell->cdr;
-    
     printKrtObj(car);
 
-    if (cdr.type == KRT_EMPTY_LIST) {
+    if (getKrtType(cdr) == KRT_EMPTY_LIST) {
       break;
-    } else if (cdr.type == KRT_CONS) {
+    } else if (getKrtType(cdr) == KRT_CONS) {
       printf(" ");
-      cell = cdr.ptr;
+
+      car = getCar(cdr);
+      cdr = getCdr(cdr);
+
+      continue;
     } else {
       printf(" . ");
       printKrtObj(cdr);
@@ -32,7 +34,7 @@ printKrtCons (KrtObj obj)
 void
 printKrtObj (KrtObj obj)
 {
-  switch (obj.type) {
+  switch (getKrtType(obj)) {
   case KRT_EMPTY_LIST:
     printf("()");
     break;
@@ -40,13 +42,13 @@ printKrtObj (KrtObj obj)
     printKrtCons(obj);
     break;
   case KRT_SYMBOL:
-    printf("%s", ((KrtSymbol*)obj.ptr)->name);
+    printf("%s", getName(obj));
     break;
   case KRT_NUMBER:
-    printf("%f", ((KrtNumber*)obj.ptr)->val);
+    printf("%f", getNum(obj));
     break;
   case KRT_BOOL:
-    if (((KrtBool*)obj.ptr)->val)
+    if (getBool(obj))
       printf("#t");
     else
       printf("#f");

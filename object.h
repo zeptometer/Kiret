@@ -40,4 +40,13 @@ KrtObj makeKrtSymbol (char* name);
 KrtObj makeKrtNumber (double val);
 KrtObj makeKrtBool (int val);
 
+KrtType getKrtType (KrtObj obj);
+int     isEq (KrtObj a, KrtObj b);
+int     isEqv (KrtObj a, KrtObj b);
+KrtObj  getCar (KrtObj cons);
+KrtObj  getCdr (KrtObj cons);
+char*   getName (KrtObj sym);
+double  getNum (KrtObj num);
+int     getBool (KrtObj bool);
+
 #endif
