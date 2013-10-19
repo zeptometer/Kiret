@@ -52,6 +52,8 @@ printKrtObj (KrtObj obj)
     else
       printf("#f");
     break;
+  default:
+    printf("#<cannot print>");
   }
 }
 

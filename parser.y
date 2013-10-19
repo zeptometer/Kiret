@@ -7,6 +7,7 @@ void yyerror (char const *);
 
 %code {
 #include "common.h"
+#include "eval.h"
 #include "print.h"
 }
 
@@ -17,7 +18,10 @@ void yyerror (char const *);
 
 input
 :
-| input sexp { printKrtObj($2); printf("\nscm> "); }
+| input sexp { printKrtObj($2);
+               printf("\n");
+               printKrtObj(eval($2, rootEnv));
+               printf("\nscm> "); }
 ;
 
 sexp
@@ -47,6 +51,7 @@ void yyerror(char const *s)
 
 int main()
 {
+  initialize();
   printf("scm> ");
   yyparse();
   return 0;

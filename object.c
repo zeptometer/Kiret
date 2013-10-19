@@ -1,6 +1,21 @@
 #include "common.h"
 #include "object.h"
 #include "intern.h"
+#include "env.h"
+
+typedef struct {
+  KrtObj car;
+  KrtObj cdr;
+} KrtCons;
+
+typedef struct {
+  double val;
+} KrtNumber;
+
+typedef struct {
+  int val;
+} KrtBool;
+
 
 KrtObj
 makeKrtEmptyList ()
@@ -8,7 +23,7 @@ makeKrtEmptyList ()
   KrtObj obj;
 
   obj.type = KRT_EMPTY_LIST;
-  obj.ptr  = NULL;
+  obj.val.ptr  = NULL;
 
   return obj;
 }
@@ -23,7 +38,7 @@ makeKrtCons (KrtObj car, KrtObj cdr)
   cell->cdr = cdr;
 
   obj.type = KRT_CONS;
-  obj.ptr = (void*)cell;
+  obj.val.ptr = (void*)cell;
 
   return obj;
 }
@@ -31,15 +46,11 @@ makeKrtCons (KrtObj car, KrtObj cdr)
 KrtObj
 makeKrtSymbol (char* name)
 {
-  KrtSymbol *symbol = GC_malloc(sizeof(KrtSymbol));
   KrtObj obj;
-  char* symname = internString(name);
-
-  strcpy(symname, name);
-  symbol->name = symname;
+  char* sym = internString(name);
 
   obj.type = KRT_SYMBOL;
-  obj.ptr  = (void*)symbol;
+  obj.val.ptr  = (void*)sym;
   
   return obj;
 }
@@ -48,12 +59,9 @@ KrtObj
 makeKrtNumber (double val)
 {
   KrtObj obj;
-  KrtNumber *ptr = GC_malloc_atomic(sizeof(KrtNumber));
-
-  ptr->val = val;
-
+ 
   obj.type = KRT_NUMBER;
-  obj.ptr  = ptr;
+  obj.val.num  = val;
 
   return obj;
 }
@@ -62,12 +70,9 @@ KrtObj
 makeKrtBool (int val)
 {
   KrtObj obj;
-  KrtBool *ptr = GC_malloc_atomic(sizeof(KrtBool));
-
-  ptr->val = val;
 
   obj.type = KRT_BOOL;
-  obj.ptr  = ptr;
+  obj.val.bool = val;
 
   return obj;
 }
@@ -82,24 +87,26 @@ getKrtType (KrtObj obj)
 int
 isEq (KrtObj a, KrtObj b)
 {
-  return a.ptr == b.ptr;
+  return a.val.ptr == b.val.ptr;
 }
 
 int
 isEqv (KrtObj a, KrtObj b)
 {
-  if (a.type != b.type) {
+  if (getKrtType(a) != getKrtType(b)) {
     return 0;
   } else {
-    switch (a.type) {
+    switch (getKrtType(a)) {
     case KRT_EMPTY_LIST:
       return 1;
     case KRT_CONS:
-      return a.ptr == b.ptr
+      return isEq(a, b)
 	|| (isEqv(getCar(a), getCar(b))
 	    && isEqv(getCdr(a), getCdr(b)));
     case KRT_SYMBOL:
-      return a.ptr == b.ptr;
+    case KRT_CLOSURE:
+    case KRT_PRIM_FUNC:
+      return isEq(a,b);
     case KRT_NUMBER:
       return getNum(a) == getNum(b);
     case KRT_BOOL:
@@ -111,29 +118,29 @@ isEqv (KrtObj a, KrtObj b)
 KrtObj
 getCar (KrtObj cons)
 {
-  return ((KrtCons*)cons.ptr)->car;
+  return ((KrtCons*)cons.val.ptr)->car;
 }
 
 KrtObj
 getCdr (KrtObj cons)
 {
-  return ((KrtCons*)cons.ptr)->cdr;
+  return ((KrtCons*)cons.val.ptr)->cdr;
 }
 
 char*
 getName (KrtObj sym)
 {
-  return ((KrtSymbol*)sym.ptr)->name;
+  return (char*)sym.val.ptr;
 }
 
 double
 getNum (KrtObj num)
 {
-  return ((KrtNumber*)num.ptr)->val;
+  return (double)num.val.num;
 }
 
 int
 getBool (KrtObj bool)
 {
-  return ((KrtBool*)bool.ptr)->val;
+  return (int)bool.val.bool;
 }

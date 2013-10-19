@@ -43,6 +43,8 @@ getVar (KrtObj sym, KrtEnv env)
 
     curframe = curframe->parent;
   }
+
+  abort();
 }
 
 void
@@ -76,4 +78,6 @@ setVar (KrtObj sym, KrtObj val, KrtEnv env)
 
     curframe = curframe->parent;
   }
+
+  abort();
 }

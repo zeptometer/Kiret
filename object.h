@@ -6,32 +6,20 @@ typedef enum {
   KRT_CONS,
   KRT_SYMBOL,
   KRT_NUMBER,
-  KRT_BOOL
+  KRT_BOOL,
+  KRT_CLOSURE,
+  KRT_PRIM_FUNC,
 } KrtType;
 
 
 typedef struct {
   KrtType type;
-  void* ptr;
+  union {
+    void*  ptr;
+    double num;
+    int    bool;
+  } val;
 } KrtObj;
-
-
-typedef struct {
-  KrtObj car;
-  KrtObj cdr;
-} KrtCons;
-
-typedef struct {
-  char *name;
-} KrtSymbol;
-
-typedef struct {
-  double val;
-} KrtNumber;
-
-typedef struct {
-  int val;
-} KrtBool;
 
 
 KrtObj makeKrtEmptyList ();
@@ -41,6 +29,7 @@ KrtObj makeKrtNumber (double val);
 KrtObj makeKrtBool (int val);
 
 KrtType getKrtType (KrtObj obj);
+int     isAtom (KrtObj obj);
 int     isEq (KrtObj a, KrtObj b);
 int     isEqv (KrtObj a, KrtObj b);
 KrtObj  getCar (KrtObj cons);
