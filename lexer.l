@@ -1,4 +1,5 @@
 %{
+#include "common.h"
 #include "object.h"
 #include "parser.h"
 

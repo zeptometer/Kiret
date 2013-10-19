@@ -1,6 +1,4 @@
-#include <gc.h>
-#include <string.h>
-
+#include "common.h"
 #include "object.h"
 #include "intern.h"
 

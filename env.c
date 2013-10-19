@@ -1,5 +1,4 @@
-#include <gc.h>
-
+#include "common.h"
 #include "object.h"
 #include "env.h"
 

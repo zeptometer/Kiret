@@ -6,8 +6,7 @@ void yyerror (char const *);
 }
 
 %code {
-#include <stdio.h>
-#include <gc.h>
+#include "common.h"
 #include "print.h"
 }
 

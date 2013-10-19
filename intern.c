@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <gc.h>
-
+#include "common.h"
 #include "object.h"
 #include "intern.h"
 

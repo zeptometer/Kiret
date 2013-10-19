@@ -1,5 +1,4 @@
-#include <stdio.h>
-
+#include "common.h"
 #include "object.h"
 #include "print.h"
 
