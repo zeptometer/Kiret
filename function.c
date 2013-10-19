@@ -18,10 +18,10 @@ makeKrtClosure (KrtEnv env, KrtObj args, KrtObj code)
 
   ptr->env  = env;
   ptr->args = args;
-  ptr->code = code;
+  ptr->code = makeKrtCons(makeKrtSymbol("begin"),code);
 
   obj.type = KRT_CLOSURE;
-  obj.ptr  = (void*)ptr;
+  obj.val.ptr  = (void*)ptr;
 
   return obj;
 }
@@ -32,7 +32,7 @@ makeKrtPrimFunc (KrtPrimFunc func)
   KrtObj obj;
 
   obj.type = KRT_PRIM_FUNC;
-  obj.ptr = (void*)func;
+  obj.val.ptr = (void*)func;
 
   return obj;
 }
@@ -40,22 +40,22 @@ makeKrtPrimFunc (KrtPrimFunc func)
 
 KrtEnv getEnv (KrtObj obj)
 {
-  return ((KrtClosure*)obj.ptr)->env;
+  return ((KrtClosure*)obj.val.ptr)->env;
 }
 
 KrtObj getArgs (KrtObj obj)
 {
-  return ((KrtClosure*)obj.ptr)->args;
+  return ((KrtClosure*)obj.val.ptr)->args;
 }
 
 KrtObj getCode (KrtObj obj)
 {
-  return ((KrtClosure*)obj.ptr)->code;
+  return ((KrtClosure*)obj.val.ptr)->code;
 }
 
 
 
 KrtObj applyKrtPrimFunc (KrtObj prim, KrtObj args)
 {
-  return ((KrtPrimFunc)prim.ptr)(args);
+  return ((KrtPrimFunc)prim.val.ptr)(args);
 }

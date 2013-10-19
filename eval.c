@@ -26,23 +26,38 @@ void initialize () {
 }
 
 static KrtObj
+eval_each (KrtObj list, KrtEnv env)
+{
+  if (getKrtType(list) == KRT_EMPTY_LIST) {
+    return makeKrtEmptyList();
+  } else {
+    return makeKrtCons(eval(getCar(list), env),
+		       eval_each(getCdr(list), env));
+  }
+}
+
+static KrtObj
 applyKrtClosure (KrtObj func, KrtObj args, KrtEnv env)
 {
-  KrtEnv frame = makeKrtEnv(env);
+  KrtEnv frame = makeKrtEnv(getEnv(func));
 
   KrtObj sym;
   KrtObj restsym = getArgs(func);
   KrtObj arg;
   KrtObj restarg = args;
 
-  while (getKrtType(restarg) != KRT_EMPTY_LIST
-	 || getKrtType(restsym) != KRT_EMPTY_LIST) {
+  while (getKrtType(restsym) != KRT_EMPTY_LIST) {
+    if (getKrtType(restsym) == KRT_SYMBOL) {
+      bindVar(restsym, eval_each(restarg, env), frame);
+      break;
+    }
+
     arg     = getCar(restarg);
     restarg = getCdr(restarg);
     sym     = getCar(restsym);
     restsym = getCdr(restsym);
 
-    bindVar(sym, arg, frame);
+    bindVar(sym, eval(arg, env), frame);
   }
 
   return eval(getCode(func), frame);
@@ -79,7 +94,7 @@ eval (KrtObj code, KrtEnv env)
 	  if (getKrtType(rest) == KRT_EMPTY_LIST) {
 	    return makeKrtEmptyList();
 	  } else {
-	    eval (getCar(rest), env);
+	    return eval(getCar(rest), env);
 	  }
 	}
 
