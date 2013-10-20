@@ -52,10 +52,3 @@ KrtObj getCode (KrtObj obj)
 {
   return ((KrtClosure*)obj.val.ptr)->code;
 }
-
-
-
-KrtObj applyKrtPrimFunc (KrtObj prim, KrtObj args)
-{
-  return ((KrtPrimFunc)prim.val.ptr)(args);
-}

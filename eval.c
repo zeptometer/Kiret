@@ -63,6 +63,12 @@ applyKrtClosure (KrtObj func, KrtObj args, KrtEnv env)
   return eval(getCode(func), frame);
 }
 
+KrtObj applyKrtPrimFunc (KrtObj prim, KrtObj args, KrtEnv env)
+{
+  return ((KrtPrimFunc)prim.val.ptr)(eval_each(args, env));
+}
+
+
 
 KrtObj
 eval (KrtObj code, KrtEnv env)
@@ -144,7 +150,7 @@ eval (KrtObj code, KrtEnv env)
 	case KRT_CLOSURE:
 	  return applyKrtClosure (func, args, env);
 	case KRT_PRIM_FUNC:
-	  return applyKrtPrimFunc (func, args);
+	  return applyKrtPrimFunc (func, args, env);
 	default:
 	  abort();
 	}

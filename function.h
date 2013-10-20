@@ -13,6 +13,6 @@ KrtEnv getEnv (KrtObj obj);
 KrtObj getArgs (KrtObj obj);
 KrtObj getCode (KrtObj obj);
 
-KrtObj applyKrtPrimFunc (KrtObj prim, KrtObj args);
+KrtPrimFunc getPrimFunc (KrtObj obj);
 
 #endif
