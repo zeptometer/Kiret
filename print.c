@@ -1,6 +1,7 @@
 #include "common.h"
 #include "object.h"
 #include "print.h"
+#include "function.h"
 
 void
 printKrtCons (KrtObj cons)
@@ -52,9 +53,14 @@ printKrtObj (KrtObj obj)
     else
       printf("#f");
     break;
-  default:
-    printf("#<cannot print>");
+  case KRT_CLOSURE:
+    printf("#<closure ");
+    printKrtObj(getArgs(obj));
+    printf(" -> ");
+    printKrtObj(getCode(obj));
+    printf(">");
+    break;
+  case KRT_PRIM_FUNC:
+    printf("#<primtive function>");
   }
 }
-
-
