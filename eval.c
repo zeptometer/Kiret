@@ -36,43 +36,22 @@ eval_each (KrtObj list, KrtEnv env)
   }
 }
 
-static KrtObj
-applyKrtClosure (KrtObj func, KrtObj args, KrtEnv env)
-{
-  KrtEnv frame = makeKrtEnv(getEnv(func));
-
-  KrtObj sym;
-  KrtObj restsym = getArgs(func);
-  KrtObj arg;
-  KrtObj restarg = args;
-
-  while (getKrtType(restsym) != KRT_EMPTY_LIST) {
-    if (getKrtType(restsym) == KRT_SYMBOL) {
-      bindVar(restsym, eval_each(restarg, env), frame);
-      break;
-    }
-
-    arg     = getCar(restarg);
-    restarg = getCdr(restarg);
-    sym     = getCar(restsym);
-    restsym = getCdr(restsym);
-
-    bindVar(sym, eval(arg, env), frame);
-  }
-
-  return eval(getCode(func), frame);
-}
-
 KrtObj applyKrtPrimFunc (KrtObj prim, KrtObj args, KrtEnv env)
 {
   return ((KrtPrimFunc)prim.val.ptr)(eval_each(args, env));
 }
 
+#define TAIL_CALL(c, e) do {			\
+    code = c;					\
+    env = e;					\
+    goto LOOP;					\
+  } while (0)					\
 
 
 KrtObj
 eval (KrtObj code, KrtEnv env)
 {
+ LOOP:
   switch (getKrtType(code)) {
   case KRT_SYMBOL:
     return getVar(code, env);
@@ -94,13 +73,13 @@ eval (KrtObj code, KrtEnv env)
 	KrtObj pred = eval(getCar(getCdr(code)), env);
 
 	if (getBool(pred)) {
-	  return eval(getCar(getCdr(getCdr(code))), env);
+	  TAIL_CALL(getCar(getCdr(getCdr(code))), env);
 	} else {
 	  KrtObj rest = getCdr(getCdr(getCdr(code)));
 	  if (getKrtType(rest) == KRT_EMPTY_LIST) {
 	    return makeKrtEmptyList();
 	  } else {
-	    return eval(getCar(rest), env);
+	    TAIL_CALL(getCar(rest), env);
 	  }
 	}
 
@@ -148,7 +127,30 @@ eval (KrtObj code, KrtEnv env)
 
 	switch (getKrtType(func)) {
 	case KRT_CLOSURE:
-	  return applyKrtClosure (func, args, env);
+	  {
+	    KrtEnv frame = makeKrtEnv(getEnv(func));
+
+	    KrtObj sym;
+	    KrtObj restsym = getArgs(func);
+	    KrtObj arg;
+	    KrtObj restarg = args;
+
+	    while (getKrtType(restsym) != KRT_EMPTY_LIST) {
+	      if (getKrtType(restsym) == KRT_SYMBOL) {
+		bindVar(restsym, eval_each(restarg, env), frame);
+		break;
+	      }
+
+	      arg     = getCar(restarg);
+	      restarg = getCdr(restarg);
+	      sym     = getCar(restsym);
+	      restsym = getCdr(restsym);
+
+	      bindVar(sym, eval(arg, env), frame);
+	    }
+
+	    TAIL_CALL(getCode(func), frame);
+	  }
 	case KRT_PRIM_FUNC:
 	  return applyKrtPrimFunc (func, args, env);
 	default:
