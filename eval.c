@@ -86,14 +86,13 @@ eval (KrtObj code, KrtEnv env)
       } else if (isEq(head, BEGIN)) {
 
 	KrtObj body = getCdr(code);
-	KrtObj value;
 
-	while (getKrtType(body) != KRT_EMPTY_LIST) {
-	  value = eval(getCar(body), env);
+	while (getKrtType(getCdr(body)) != KRT_EMPTY_LIST) {
+	  eval(getCar(body), env);
 	  body = getCdr(body);
 	}
 
-	return value;
+	TAIL_CALL(getCar(body), env);
 
       } else if (isEq(head, LAMBDA)) {
 
