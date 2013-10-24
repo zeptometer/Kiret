@@ -1,7 +1,8 @@
 #include "common.h"
 #include "object.h"
 #include "intern.h"
-#include "env.h"
+
+/* KrtObj */
 
 typedef struct {
   KrtObj car;
@@ -9,13 +10,12 @@ typedef struct {
 } KrtCons;
 
 typedef struct {
-  double val;
-} KrtNumber;
+  KrtEnv env;
+  KrtObj args;
+  KrtObj code;
+} KrtClosure;
 
-typedef struct {
-  int val;
-} KrtBool;
-
+/* constructor */
 
 KrtObj
 makeKrtEmptyList ()
@@ -77,6 +77,85 @@ makeKrtBool (int val)
   return obj;
 }
 
+KrtObj
+makeKrtClosure (KrtEnv env, KrtObj args, KrtObj code)
+{
+  KrtObj obj;
+  KrtClosure *ptr = GC_malloc(sizeof(KrtClosure));
+
+  ptr->env  = env;
+  ptr->args = args;
+  ptr->code = makeKrtCons(makeKrtSymbol("begin"),code);
+
+  obj.type = KRT_CLOSURE;
+  obj.val.ptr  = (void*)ptr;
+
+  return obj;
+}
+
+KrtObj
+makeKrtMacro (KrtObj closure)
+{
+  KrtObj obj;
+
+  obj.type = KRT_MACRO;
+  obj.val.ptr  = closure.val.ptr;
+
+  return obj;
+}
+
+
+KrtObj
+makeKrtPrimFunc (KrtPrimFunc func)
+{
+  KrtObj obj;
+
+  obj.type = KRT_PRIM_FUNC;
+  obj.val.ptr = (void*)func;
+
+  return obj;
+}
+
+KrtObj
+makeKrtSyntacticClosure (KrtEnv env, KrtObj code)
+{
+  KrtObj obj;
+  KrtClosure *ptr = GC_malloc(sizeof(KrtClosure));
+
+  ptr->env  = env;
+  ptr->args = makeKrtEmptyList();
+  ptr->code = makeKrtCons(makeKrtSymbol("begin"),code);
+
+  obj.type = KRT_SYNTACTIC_CLOSURE;
+  obj.val.ptr  = (void*)ptr;
+
+  return obj;
+}
+
+KrtObj
+makeKrtSyntax (KrtSyntaxType syntax)
+{
+  KrtObj obj;
+
+  obj.type = KRT_SYNTAX;
+  obj.val.syntax = syntax;
+
+  return obj;
+}
+
+KrtObj
+envToObj (KrtEnv env)
+{
+  KrtObj obj;
+
+  obj.type = KRT_ENV;
+  obj.val.ptr = env;
+
+  return obj;
+}
+
+
+/* accessor */
 
 KrtType
 getKrtType (KrtObj obj)
@@ -84,37 +163,7 @@ getKrtType (KrtObj obj)
   return obj.type;
 }
 
-int
-isEq (KrtObj a, KrtObj b)
-{
-  return a.val.ptr == b.val.ptr;
-}
-
-int
-isEqv (KrtObj a, KrtObj b)
-{
-  if (getKrtType(a) != getKrtType(b)) {
-    return 0;
-  } else {
-    switch (getKrtType(a)) {
-    case KRT_EMPTY_LIST:
-      return 1;
-    case KRT_CONS:
-      return isEq(a, b)
-	|| (isEqv(getCar(a), getCar(b))
-	    && isEqv(getCdr(a), getCdr(b)));
-    case KRT_SYMBOL:
-    case KRT_CLOSURE:
-    case KRT_PRIM_FUNC:
-      return isEq(a,b);
-    case KRT_NUMBER:
-      return getNum(a) == getNum(b);
-    case KRT_BOOL:
-      return getBool(a) == getBool(b);
-    }
-  }
-}
-
+// cons
 KrtObj
 getCar (KrtObj cons)
 {
@@ -127,20 +176,146 @@ getCdr (KrtObj cons)
   return ((KrtCons*)cons.val.ptr)->cdr;
 }
 
+// symbol
 char*
 getName (KrtObj sym)
 {
   return (char*)sym.val.ptr;
 }
 
+// number
 double
 getNum (KrtObj num)
 {
   return (double)num.val.num;
 }
 
+// bool
 int
 getBool (KrtObj bool)
 {
   return (int)bool.val.bool;
+}
+
+// env
+KrtEnv
+objToEnv (KrtObj obj)
+{
+  return (KrtEnv)obj.val.ptr;
+}
+
+// closure | syntactic closure
+KrtEnv
+getEnv (KrtObj obj)
+{
+  return ((KrtClosure*)obj.val.ptr)->env;
+}
+
+KrtObj
+getArgs (KrtObj obj)
+{
+  return ((KrtClosure*)obj.val.ptr)->args;
+}
+
+KrtObj
+getCode (KrtObj obj)
+{
+  return ((KrtClosure*)obj.val.ptr)->code;
+}
+
+// primitive function
+KrtPrimFunc
+getPrimFunc (KrtObj obj)
+{
+  return (KrtPrimFunc)obj.val.ptr;
+}
+
+// syntax
+KrtSyntaxType
+getSyntaxType (KrtObj obj)
+{
+  return obj.val.syntax;
+}
+
+
+/* env */
+
+typedef struct KrtVarData *KrtVar;
+struct KrtVarData {
+  KrtVar next;
+  KrtObj symbol;
+  KrtObj value;
+};
+
+struct KrtEnvData {
+  KrtEnv parent;
+  KrtVar head;
+};
+
+
+KrtEnv
+makeKrtEnv (KrtEnv parent)
+{
+  KrtEnv env = GC_malloc(sizeof(struct KrtEnvData));
+
+  env->parent = parent;
+  env->head = NULL;
+
+  return env;
+}
+
+KrtObj
+getVar (KrtObj sym, KrtEnv env)
+{
+  KrtEnv curframe = env;
+
+  while (curframe != NULL) {
+    KrtVar curvar = curframe->head;
+    
+    while (curvar != NULL) {
+      if (sym.val.ptr == curvar->symbol.val.ptr)
+        return curvar->value;
+      
+      curvar = curvar->next;
+    }
+
+    curframe = curframe->parent;
+  }
+
+  abort();
+}
+
+void
+bindVar (KrtObj sym, KrtObj val, KrtEnv env)
+{
+  KrtVar var = GC_malloc(sizeof(struct KrtVarData));
+  
+  var->symbol = sym;
+  var->value = val;
+  var->next = env->head;
+
+  env->head = var;
+}
+
+void
+setVar (KrtObj sym, KrtObj val, KrtEnv env)
+{
+  KrtEnv curframe = env;
+
+  while (curframe != NULL) {
+    KrtVar curvar = curframe->head;
+    
+    while (curvar != NULL) {
+      if (sym.val.ptr == curvar->symbol.val.ptr) {
+        curvar->value = val;
+        return;
+      }
+      
+      curvar = curvar->next;
+    }
+
+    curframe = curframe->parent;
+  }
+
+  abort();
 }

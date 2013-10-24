@@ -1,5 +1,4 @@
 #include "object.h"
-#include "env.h"
 
 #ifndef EVAL_H
 #define EVAL_H

@@ -1,7 +1,5 @@
 #include "common.h"
 #include "object.h"
-#include "env.h"
-#include "function.h"
 #include "eval.h"
 
 static KrtObj
@@ -80,7 +78,35 @@ KrtPrimSub (KrtObj obj)
 static KrtObj
 KrtPrimIsEq (KrtObj obj)
 {
-  return makeKrtBool(isEq(getCar(obj), getCar(getCdr(obj))));
+  int result = getCar(obj).val.ptr == getCar(getCdr(obj)).val.ptr;
+  return makeKrtBool(result);
+}
+
+static int
+isEqv (KrtObj a, KrtObj b)
+{
+  if (getKrtType(a) != getKrtType(b)) {
+    return 0;
+  } else {
+    switch (getKrtType(a)) {
+    case KRT_EMPTY_LIST:
+      return 1;
+    case KRT_CONS:
+      return (a.val.ptr == b.val.ptr)
+        || (isEqv(getCar(a), getCar(b))
+         && isEqv(getCdr(a), getCdr(b)));
+    case KRT_SYMBOL:
+    case KRT_CLOSURE:
+    case KRT_PRIM_FUNC:
+      return a.val.ptr == b.val.ptr;
+    case KRT_NUMBER:
+      return getNum(a) == getNum(b);
+    case KRT_BOOL:
+      return getBool(a) == getBool(b);
+    default:
+      abort();
+    }
+  }
 }
 
 static KrtObj
@@ -88,8 +114,6 @@ KrtPrimIsEqv (KrtObj obj)
 {
   return makeKrtBool(isEqv(getCar(obj), getCar(getCdr(obj))));
 }
-
-
 
 void
 defineKrtPrimFunc (char* name, KrtPrimFunc func)
@@ -100,15 +124,32 @@ defineKrtPrimFunc (char* name, KrtPrimFunc func)
   bindVar(sym, prim, rootEnv);
 }
 
+void
+defineKrtSyntax (char* name, KrtSyntaxType tag)
+{
+  KrtObj sym    = makeKrtSymbol(name);
+  KrtObj syntax = makeKrtSyntax(tag);
+
+  bindVar(sym, syntax, rootEnv);
+}
+
 void initialize_primitive()
 {
-  defineKrtPrimFunc("car", KrtPrimCar);
-  defineKrtPrimFunc("cdr", KrtPrimCdr);
-  defineKrtPrimFunc("cons", KrtPrimCons);
-  defineKrtPrimFunc("list", KrtPrimList);
+  defineKrtSyntax("quote",  KRT_SYNTAX_QUOTE);
+  defineKrtSyntax("if",     KRT_SYNTAX_IF);
+  defineKrtSyntax("lambda", KRT_SYNTAX_LAMBDA);
+  defineKrtSyntax("begin",  KRT_SYNTAX_BEGIN);
+  defineKrtSyntax("set!",   KRT_SYNTAX_SET);
+  defineKrtSyntax("define", KRT_SYNTAX_DEFINE);
+  defineKrtSyntax("define-syntax", KRT_SYNTAX_DEFINE_SYNTAX);
+
+  defineKrtPrimFunc("car",    KrtPrimCar);
+  defineKrtPrimFunc("cdr",    KrtPrimCdr);
+  defineKrtPrimFunc("cons",   KrtPrimCons);
+  defineKrtPrimFunc("list",   KrtPrimList);
   defineKrtPrimFunc("empty?", KrtPrimIsEmpty);
-  defineKrtPrimFunc("+", KrtPrimPlus);
-  defineKrtPrimFunc("-", KrtPrimSub);
-  defineKrtPrimFunc("eq?", KrtPrimIsEq);
-  defineKrtPrimFunc("eqv?", KrtPrimIsEqv);
+  defineKrtPrimFunc("+",      KrtPrimPlus);
+  defineKrtPrimFunc("-",      KrtPrimSub);
+  defineKrtPrimFunc("eq?",    KrtPrimIsEq);
+  defineKrtPrimFunc("eqv?",   KrtPrimIsEqv);
 }

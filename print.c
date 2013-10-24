@@ -1,7 +1,6 @@
 #include "common.h"
 #include "object.h"
 #include "print.h"
-#include "function.h"
 
 void
 printKrtCons (KrtObj cons)
@@ -62,5 +61,8 @@ printKrtObj (KrtObj obj)
     break;
   case KRT_PRIM_FUNC:
     printf("#<primtive function>");
+    break;
+  default:
+    printf("#<fee>");
   }
 }
