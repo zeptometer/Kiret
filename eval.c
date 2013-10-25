@@ -48,52 +48,56 @@ eval (KrtObj code, KrtEnv env)
       KrtObj func = eval(getCar(code), env);
       KrtObj args = getCdr(code);
 
-    case KRT_CLOSURE:
-      {
-	KrtEnv frame = makeKrtEnv(getEnv(func));
+      switch (getKrtType(func)) {
+      case KRT_CLOSURE:
+	{
+	  KrtEnv frame = makeKrtEnv(getEnv(func));
 
-	KrtObj sym;
-	KrtObj arg;
-	KrtObj restsym = getArgs(func);
-	KrtObj restarg = args;
+	  KrtObj sym;
+	  KrtObj arg;
+	  KrtObj restsym = getArgs(func);
+	  KrtObj restarg = args;
 
-	while (getKrtType(restsym) != KRT_EMPTY_LIST) {
-	  if (getKrtType(restsym) == KRT_SYMBOL) {
-	    bindVar(restsym, eval_each(restarg, env), frame);
-	    break;
+	  while (getKrtType(restsym) != KRT_EMPTY_LIST) {
+	    if (getKrtType(restsym) == KRT_SYMBOL) {
+	      bindVar(restsym, eval_each(restarg, env), frame);
+	      break;
+	    }
+
+	    arg     = getCar(restarg);
+	    restarg = getCdr(restarg);
+	    sym     = getCar(restsym);
+	    restsym = getCdr(restsym);
+
+	    bindVar(sym, eval(arg, env), frame);
 	  }
 
-	  arg     = getCar(restarg);
-	  restarg = getCdr(restarg);
-	  sym     = getCar(restsym);
-	  restsym = getCdr(restsym);
-
-	  bindVar(sym, eval(arg, env), frame);
+	  TAIL_CALL(getCode(func), frame);
 	}
 
-	TAIL_CALL(getCode(func), frame);
-      }
+      case KRT_PRIM_FUNC:
+	return getPrimFunc(func)(eval_each(args, env));
 
-    case KRT_PRIM_FUNC:
-      return getPrimFunc(func)(eval_each(args, env));
+      case KRT_MACRO:
+	{
+	  KrtObj expand;
 
-    case KRT_MACRO:
-      {
-	KrtEnv frame	     = makeKrtEnv(getEnv(func));
-	KrtObj args_sym    = getArgs(func);
+	  KrtEnv frame	     = makeKrtEnv(getEnv(func));
+	  KrtObj args_sym    = getArgs(func);
 
-	KrtObj code_sym    = getCar(args_sym);
-	KrtObj mac_env_sym = getCar(getCdr(args_sym));
-	KrtObj use_env_sym = getCar(getCdr(getCdr(args_sym)));
+	  KrtObj code_sym    = getCar(args_sym);
+	  KrtObj mac_env_sym = getCar(getCdr(args_sym));
+	  KrtObj use_env_sym = getCar(getCdr(getCdr(args_sym)));
 
-	bindVar(code_sym, code, frame);
-	bindVar(mac_env_sym, envToObj(getEnv(func)), frame);
-	bindVar(use_env_sym, envToObj(env), frame);
+	  bindVar(code_sym, code, frame);
+	  bindVar(mac_env_sym, envToObj(getEnv(func)), frame);
+	  bindVar(use_env_sym, envToObj(env), frame);
 
-	TAIL_CALL(eval(getCode(func), frame), env);
-      }
+	  expand = eval(getCode(func), frame);
 
-      switch (getKrtType(func)) {
+	  TAIL_CALL(expand, env);
+	}
+
       case KRT_SYNTAX:
 	switch (getSyntaxType(func)) {
 	case KRT_SYNTAX_QUOTE:
