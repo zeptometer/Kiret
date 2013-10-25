@@ -62,7 +62,13 @@ printKrtObj (KrtObj obj)
   case KRT_PRIM_FUNC:
     printf("#<primtive function>");
     break;
+  case KRT_SYNTACTIC_CLOSURE:
+    printf("#<syntactic-closure ");
+    printKrtObj(getCode(obj));
+    printf(">");
+    break;
   default:
     printf("#<fee>");
   }
+  fflush(stdout);
 }
