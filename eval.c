@@ -41,7 +41,12 @@ eval (KrtObj code, KrtEnv env)
     return code;
 
   case KRT_SYNTACTIC_CLOSURE:
-    TAIL_CALL(getCode(code), getEnv(code));
+    {
+      KrtObj newCode = getCode(code);
+      KrtEnv newEnv  = getEnv(code);
+
+      TAIL_CALL(newCode, newEnv);
+    }
 
   case KRT_CONS:
     {
