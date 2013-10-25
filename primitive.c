@@ -115,6 +115,17 @@ KrtPrimIsEqv (KrtObj obj)
   return makeKrtBool(isEqv(getCar(obj), getCar(getCdr(obj))));
 }
 
+static KrtObj
+KrtPrimMakeSyntacticClosure (KrtObj args)
+{
+  KrtObj env	  = getCar(args);
+  KrtObj freeVars __attribute__((unused)) = getCar(getCdr(args));
+  KrtObj code	  = getCar(getCdr(getCdr(args)));
+
+  //warning: now ignore freeVars
+  return makeKrtSyntacticClosure(objToEnv(env), code);
+}
+
 void
 defineKrtPrimFunc (char* name, KrtPrimFunc func)
 {
@@ -152,4 +163,5 @@ void initialize_primitive()
   defineKrtPrimFunc("-",      KrtPrimSub);
   defineKrtPrimFunc("eq?",    KrtPrimIsEq);
   defineKrtPrimFunc("eqv?",   KrtPrimIsEqv);
+  defineKrtPrimFunc("make-syntactic-closure", KrtPrimMakeSyntacticClosure);
 }

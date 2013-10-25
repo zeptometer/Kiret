@@ -124,7 +124,7 @@ makeKrtSyntacticClosure (KrtEnv env, KrtObj code)
 
   ptr->env  = env;
   ptr->args = makeKrtEmptyList();
-  ptr->code = makeKrtCons(makeKrtSymbol("begin"),code);
+  ptr->code = code;
 
   obj.type = KRT_SYNTACTIC_CLOSURE;
   obj.val.ptr  = (void*)ptr;
