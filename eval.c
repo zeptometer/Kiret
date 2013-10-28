@@ -140,7 +140,11 @@ eval (KrtObj code, KrtEnv env)
 	    KrtObj args = getCar(getCdr(code));
 	    KrtObj body = getCdr(getCdr(code));
 
-	    return makeKrtClosure(env, args, body);
+	    if (getKrtType(getCdr(body)) == KRT_EMPTY_LIST) {
+	      return makeKrtClosure(env, args, getCar(body));
+	    } else {
+	      return makeKrtClosure(env, args, makeKrtCons(makeKrtSymbol("begin"), body));
+	    }
 	  }
 
 	case KRT_SYNTAX_SET:
@@ -148,7 +152,16 @@ eval (KrtObj code, KrtEnv env)
 	    KrtObj var = getCar(getCdr(code));
 	    KrtObj val = eval(getCar(getCdr(getCdr(code))), env);
 
-	    setVar(var, val, env);
+	    switch (getKrtType(var)) {
+	    case KRT_SYMBOL:
+	      setVar(var, val, env);
+	      return var;
+	    case KRT_SYNTACTIC_CLOSURE:
+	      setVar(getCode(var), val, getEnv(var));
+	      return getCode(var);
+	    default:
+	      abort();
+	    }
 
 	    return val;
 	  }
@@ -158,9 +171,16 @@ eval (KrtObj code, KrtEnv env)
 	    KrtObj var = getCar(getCdr(code));
 	    KrtObj val = eval(getCar(getCdr(getCdr(code))), env);
 
-	    bindVar(var, val, env);
-
-	    return var;
+	    switch (getKrtType(var)) {
+	    case KRT_SYMBOL:
+	      bindVar(var, val, env);
+	      return var;
+	    case KRT_SYNTACTIC_CLOSURE:
+	      bindVar(getCode(var), val, getEnv(var));
+	      return getCode(var);
+	    default:
+	      abort();
+	    }
 	  }
 	
 	case KRT_SYNTAX_DEFINE_SYNTAX:
@@ -168,7 +188,16 @@ eval (KrtObj code, KrtEnv env)
 	    KrtObj var = getCar(args);
 	    KrtObj expander = eval(getCar(getCdr(args)), env);
 
-	    bindVar(var, makeKrtMacro(expander), env);
+	    switch (getKrtType(var)) {
+	    case KRT_SYMBOL:
+	      bindVar(var, makeKrtMacro(expander), env);
+	      return var;
+	    case KRT_SYNTACTIC_CLOSURE:
+	      bindVar(getCode(var), makeKrtMacro(expander), getEnv(var));
+	      return getCode(var);
+	    default:
+	      abort();
+	    }
 	    return var;
 	  }
 	}

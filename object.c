@@ -85,7 +85,7 @@ makeKrtClosure (KrtEnv env, KrtObj args, KrtObj code)
 
   ptr->env  = env;
   ptr->args = args;
-  ptr->code = makeKrtCons(makeKrtSymbol("begin"),code);
+  ptr->code = code;
 
   obj.type = KRT_CLOSURE;
   obj.val.ptr  = (void*)ptr;
